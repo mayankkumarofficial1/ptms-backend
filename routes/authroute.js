@@ -4,7 +4,7 @@ const { login } = require('../controllers/authcontroller');
 const { changePassword } = require('../controllers/authcontroller');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-router.post('/register', register);
+// router.post('/register', register);
 router.post('/login', login);
 router.patch('/change-password', protect, changePassword);
 module.exports = router;
