@@ -24,12 +24,6 @@ const createProject = async (req, res) => {
       return res.status(404).json({ message: "Manager not found" });
     }
 
-    // ManagerId must be MANAGER (or ADMIN if you want admin as manager)
-    if (manager.role == "EMPLOYEE") {
-      return res.status(400).json({
-        message: "managerId must belong to a MANAGER or ADMIN",
-      });
-    }
 
     const project = await Project.create({
       name,
@@ -52,21 +46,6 @@ const createProject = async (req, res) => {
 const getProjects = async (req, res) => {
   try {
     let filter = {};
-
-    // Admin can see all projects
-    // if (req.user.role === "ADMIN") {
-    //   filter = {};
-    // }
-
-    // Manager can see only their projects
-    // if (req.user.role === "MANAGER") {
-    //   filter = { manager: req.user._id };
-    // }
-
-    // Employee can see projects where they are member
-    // if (req.user.role === "EMPLOYEE") {
-    //   filter = { members: req.user._id };
-    // }
 
     const projects = await Project.find(filter).populate(
       "manager",
@@ -94,25 +73,6 @@ const getProjectById = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Permission:
-    // Admin can view all
-    // Manager can view only own projects
-    // Employee can view only if member
-    // if (req.user.role === "MANAGER" && project.manager._id.toString() !== req.user._id.toString()) {
-    //   return res.status(403).json({ message: "Access denied" });
-    // }
-
-    // if (req.user.role === "EMPLOYEE") {
-    //   // const isMember = project.members.some(
-    //   //   (m) => m._id.toString() === req.user._id.toString()
-
-    //   // );
-    //   // if (!isMember) {
-    //   //   return res.status(403).json({ message: "Access denied" });
-    //   // }
-    //   return res.status(403).json({ message: "Access denied" });
-    // }
-
     return res.status(200).json({ project });
   } catch (error) {
     console.error("Get project by id error:", error.message);
@@ -131,18 +91,6 @@ const updateProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Permission:
-    // Admin can update any project
-    // Manager can update only their own project
-    // if (req.user.role === "MANAGER") {
-    //   if (project.manager.toString() !== req.user._id.toString()) {
-    //     return res.status(403).json({ message: "Access denied" });
-    //   }
-    // }
-
-    // if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
-    //   return res.status(403).json({ message: "Access denied" });
-    // }
 
     if (name) project.name = name;
     if (description !== undefined) project.description = description;
@@ -178,18 +126,6 @@ const updateProjectStatus = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Permission:
-    // Admin can update any
-    // Manager can update only their own
-    // if (req.user.role === "MANAGER") {
-    //   if (project.manager.toString() !== req.user._id.toString()) {
-    //     return res.status(403).json({ message: "Access denied" });
-    //   }
-    // }
-
-    // if (req.user.role !== "ADMIN" && req.user.role !== "MANAGER") {
-    //   return res.status(403).json({ message: "Access denied" });
-    // }
 
     project.status = status;
     await project.save();
@@ -204,7 +140,6 @@ const updateProjectStatus = async (req, res) => {
   }
 };
 
-// GET /api/projects/:id/report
 // GET /api/projects/:id/report
 const getProjectReport = async (req, res) => {
   try {
@@ -234,13 +169,13 @@ const getProjectReport = async (req, res) => {
       );
 
     // Permission check (optional – enable later)
-    // if (
-    //   !req.user.permissions?.includes("*") &&
-    //   !isProjectManager &&
-    //   !isMember
-    // ) {
-    //   return res.status(403).json({ message: "Access denied" });
-    // }
+    if (
+      !req.user.permissions?.includes("*") &&
+      !isProjectManager &&
+      !isMember
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const tasks = await Task.find({ project: projectId });
 
@@ -396,9 +331,9 @@ const changeProjectManager = async (req, res) => {
     return res.status(404).json({ message: "Manager not found" });
   }
 
-  if (newManager.role !== "MANAGER") {
-    return res.status(400).json({ message: "Selected user is not a MANAGER" });
-  }
+  // if (newManager.role !== "MANAGER") {
+  //   return res.status(400).json({ message: "Selected user is not a MANAGER" });
+  // }
 
   // already assigned?
   if (project.manager?.toString() === managerId) {

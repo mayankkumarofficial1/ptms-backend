@@ -130,6 +130,6 @@ const changePassword = async (req, res) => {
 };
 
 module.exports = {
-    register,login,changePassword
+    login,changePassword
 };
 
